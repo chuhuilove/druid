@@ -53,7 +53,7 @@ public class DruidStatServiceTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        DruidStatService.getInstance().setResetEnable(true); 
+        DruidStatService.getInstance().setResetEnable(true);
         // DruidStatService is singleton, reset all for other testcase.
         DruidStatService.getInstance().service("/reset-all.json");
         // clear web app.
@@ -132,7 +132,7 @@ public class DruidStatServiceTest extends TestCase {
         {
             DruidStatService.getInstance().service("/reset-all.json");
         }
-        
+
         String sql = "select 1";
         Connection conn = dataSource.getConnection();
 
@@ -183,7 +183,7 @@ public class DruidStatServiceTest extends TestCase {
 
     /**
      * Test basic.json request
-     * 
+     *
      * @throws Exception
      */
     public void test_statService_getBasic() throws Exception {

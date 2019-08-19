@@ -161,7 +161,7 @@ public class DruidStatServiceTest2 extends TestCase {
         //assertThat((Integer) dataSourceStat.get("PoolingCount"), equalTo(0));
         //assertThat((Integer) dataSourceStat.get("ActiveCount"), equalTo(0));
     }
-    
+
     public void test_getWallStatMap() throws Exception {
         DruidStatService.getInstance().getWallStatMap(Collections.<String, String>emptyMap());
     }

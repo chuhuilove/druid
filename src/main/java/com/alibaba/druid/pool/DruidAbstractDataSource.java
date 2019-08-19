@@ -84,6 +84,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     public final static int                            DEFAULT_MAX_ACTIVE_SIZE                   = 8;
     public final static int                            DEFAULT_MAX_IDLE                          = 8;
     public final static int                            DEFAULT_MIN_IDLE                          = 0;
+    /**
+     * 默认最大等待时间(获取连接对象)
+     */
     public final static int                            DEFAULT_MAX_WAIT                          = -1;
     public final static String                         DEFAULT_VALIDATION_QUERY                  = null;                                                //
     public final static boolean                        DEFAULT_TEST_ON_BORROW                    = false;
