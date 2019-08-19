@@ -85,10 +85,10 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     public final static int                            DEFAULT_MAX_IDLE                          = 8;
     public final static int                            DEFAULT_MIN_IDLE                          = 0;
     /**
-     * 默认最大等待时间(获取连接对象)
+     * 获取Connection对象默认需要等待的最长时间(获取一个Connection对象需要等待的最大时间)
      */
     public final static int                            DEFAULT_MAX_WAIT                          = -1;
-    public final static String                         DEFAULT_VALIDATION_QUERY                  = null;                                                //
+    public final static String                         DEFAULT_VALIDATION_QUERY                  = null;
     public final static boolean                        DEFAULT_TEST_ON_BORROW                    = false;
     public final static boolean                        DEFAULT_TEST_ON_RETURN                    = false;
     public final static boolean                        DEFAULT_WHILE_IDLE                        = true;
@@ -121,6 +121,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile int                             maxActive                                 = DEFAULT_MAX_ACTIVE_SIZE;
     protected volatile int                             minIdle                                   = DEFAULT_MIN_IDLE;
     protected volatile int                             maxIdle                                   = DEFAULT_MAX_IDLE;
+    /**
+     * 获取一个Connection对象需要等待的最大时间
+     */
     protected volatile long                            maxWait                                   = DEFAULT_MAX_WAIT;
     protected int                                      notFullTimeoutRetryCount                  = 0;
 
@@ -1135,6 +1138,10 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         if (StringUtils.equals(this.password, password)) {
             return;
         }
+
+        /**
+         * 在DataSource已经初始化以后,是可以重新再次修改密码的
+         */
 
         if (inited) {
             LOG.info("password changed");

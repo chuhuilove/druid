@@ -191,6 +191,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
 
     public DruidDataSource() {
+        /**
+         * DruidDataSource默认使用非公平锁
+         */
         this(false);
     }
 
@@ -208,6 +211,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         this.asyncInit = asyncInit;
     }
 
+    /**
+     * 从Properties中获取数据,初始化基本属性
+     * @param properties
+     */
     public void configFromPropety(Properties properties) {
         {
             String property = properties.getProperty("druid.name");
@@ -258,13 +265,15 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
         }
         {
-            Boolean value = getBoolean(properties, "druid.useGloalDataSourceStat"); // compatible for early versions
+            // compatible for early versions
+            Boolean value = getBoolean(properties, "druid.useGloalDataSourceStat");
             if (value != null) {
                 this.setUseGlobalDataSourceStat(value);
             }
         }
         {
-            Boolean value = getBoolean(properties, "druid.asyncInit"); // compatible for early versions
+            // compatible for early versions
+            Boolean value = getBoolean(properties, "druid.asyncInit");
             if (value != null) {
                 this.setAsyncInit(value);
             }
