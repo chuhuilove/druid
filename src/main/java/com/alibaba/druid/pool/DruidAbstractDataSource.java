@@ -152,6 +152,10 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     protected long                                     createTimespan;
 
+    /**
+     * 在没有获取到Connection对象的情况下,允许等待的线程最大数量
+     *
+     */
     protected volatile int                             maxWaitThreadCount                        = -1;
     protected volatile boolean                         accessToUnderlyingConnectionAllowed       = true;
 

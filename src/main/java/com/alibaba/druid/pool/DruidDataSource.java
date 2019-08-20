@@ -126,6 +126,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     private int poolingPeak = 0;
     private long poolingPeakTime = 0;
     // 存储
+    /**
+     * 存储Connection对象的数据结构
+     */
     private volatile DruidConnectionHolder[] connections;
     private int poolingCount = 0;
     private int activeCount = 0;
@@ -1348,6 +1351,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     }
 
     public DruidPooledConnection getConnectionDirect(long maxWaitMillis) throws SQLException {
+
+        LOG.warn(" function getConnectionDirect called,the maxWaitMillis is :" + maxWaitMillis);
+
         int notFullTimeoutRetryCnt = 0;
         for (; ; ) {
             // handle notFullTimeoutRetry
@@ -1473,12 +1479,17 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             throw new DataSourceClosedException("dataSource already closed at " + new Date(closeTimeMillis));
         }
 
+
         if (!enable) {
+            /**
+             * 如果没有该连接池没有被启用
+             */
             connectErrorCountUpdater.incrementAndGet(this);
             throw new DataSourceDisableException();
         }
 
         final long nanos = TimeUnit.MILLISECONDS.toNanos(maxWait);
+
         final int maxWaitThreadCount = this.maxWaitThreadCount;
 
         DruidConnectionHolder holder;
@@ -1527,7 +1538,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 connectErrorCountUpdater.incrementAndGet(this);
                 throw new SQLException("interrupt", e);
             }
-
+            // 准备从池子中获取连接对象
             try {
                 if (maxWaitThreadCount > 0
                         && notEmptyWaitThreadCount >= maxWaitThreadCount) {
@@ -1570,7 +1581,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                         && activeCount < maxActive
                         && creatingCountUpdater.get(this) == 0
                         && createScheduler instanceof ScheduledThreadPoolExecutor) {
+
                     ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) createScheduler;
+                    // 判断是否需要创建新的连接
+                    // 如果当前createScheduler中的任务数量大于0,代表生产者线程中还有任务,这时候需要继续去创建线程去
                     if (executor.getQueue().size() > 0) {
                         createDirect = true;
                         continue;
@@ -1578,6 +1592,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 }
 
                 if (maxWait > 0) {
+
                     holder = pollLast(nanos);
                 } else {
                     holder = takeLast();
@@ -1607,7 +1622,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             long waitNanos = waitNanosLocal.get();
 
             StringBuilder buf = new StringBuilder(128);
-            buf.append("wait millis ")
+            buf.append(waitNanos+" 等待毫秒:")
                     .append(waitNanos / (1000 * 1000))
                     .append(", active ").append(activeCount)
                     .append(", maxActive ").append(maxActive)
@@ -1640,9 +1655,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             String errorMessage = buf.toString();
 
             if (this.createError != null) {
-                throw new GetConnectionTimeoutException(errorMessage, createError);
+                throw new GetConnectionTimeoutException(errorMessage+" cyzi say: has error", createError);
             } else {
-                throw new GetConnectionTimeoutException(errorMessage);
+                throw new GetConnectionTimeoutException(errorMessage+" cyzi say: no error");
             }
         }
 
@@ -2041,7 +2056,8 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     DruidConnectionHolder takeLast() throws InterruptedException, SQLException {
         try {
             while (poolingCount == 0) {
-                emptySignal(); // send signal to CreateThread create connection
+                // 发送信号到CreateThread,让其创建Connection
+                emptySignal();
 
                 if (failFast && isFailContinuous()) {
                     throw new DataSourceNotAvailableException(createError);
@@ -2081,7 +2097,8 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
         for (; ; ) {
             if (poolingCount == 0) {
-                emptySignal(); // send signal to CreateThread create connection
+                // 发送信号到CreateThread,让其创建Connection
+                emptySignal();
 
                 if (failFast && isFailContinuous()) {
                     throw new DataSourceNotAvailableException(createError);
