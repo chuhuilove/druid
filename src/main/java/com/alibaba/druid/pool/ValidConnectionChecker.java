@@ -18,6 +18,9 @@ package com.alibaba.druid.pool;
 import java.sql.Connection;
 import java.util.Properties;
 
+/**
+ * 验证连接的接口
+ */
 public interface ValidConnectionChecker {
 
     boolean isValidConnection(Connection c, String query, int validationQueryTimeout) throws Exception;

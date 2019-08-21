@@ -15,43 +15,6 @@
  */
 package com.alibaba.druid.pool;
 
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
-
-import javax.management.JMException;
-import javax.management.ObjectName;
-import javax.management.openmbean.CompositeDataSupport;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.sql.DataSource;
-
 import com.alibaba.druid.DruidRuntimeException;
 import com.alibaba.druid.filter.Filter;
 import com.alibaba.druid.filter.FilterChainImpl;
@@ -64,13 +27,26 @@ import com.alibaba.druid.stat.JdbcSqlStat;
 import com.alibaba.druid.stat.JdbcStatManager;
 import com.alibaba.druid.support.logging.Log;
 import com.alibaba.druid.support.logging.LogFactory;
-import com.alibaba.druid.util.DruidPasswordCallback;
-import com.alibaba.druid.util.Histogram;
-import com.alibaba.druid.util.JdbcConstants;
-import com.alibaba.druid.util.JdbcUtils;
-import com.alibaba.druid.util.MySqlUtils;
-import com.alibaba.druid.util.StringUtils;
-import com.alibaba.druid.util.Utils;
+import com.alibaba.druid.util.*;
+
+import javax.management.JMException;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.sql.DataSource;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.sql.*;
+import java.util.Date;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 /**
  * @author wenshao [szujobs@hotmail.com]
@@ -110,6 +86,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile String                          username;
     protected volatile String                          password;
     protected volatile String                          jdbcUrl;
+    /**
+     * 驱动类名称
+     */
     protected volatile String                          driverClass;
     protected volatile ClassLoader                     driverClassLoader;
     protected volatile Properties                      connectProperties                         = new Properties();
@@ -117,8 +96,17 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile PasswordCallback                passwordCallback;
     protected volatile NameCallback                    userCallback;
 
+    /**
+     * 创建连接池时的初始化大小....
+     */
     protected volatile int                             initialSize                               = DEFAULT_INITIAL_SIZE;
+    /**
+     * Connection最大数量
+     */
     protected volatile int                             maxActive                                 = DEFAULT_MAX_ACTIVE_SIZE;
+    /**
+     * Connection最小数量
+     */
     protected volatile int                             minIdle                                   = DEFAULT_MIN_IDLE;
     protected volatile int                             maxIdle                                   = DEFAULT_MAX_IDLE;
     /**
@@ -145,6 +133,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     private boolean                                    clearFiltersEnable                        = true;
     protected volatile ExceptionSorter                 exceptionSorter                           = null;
 
+    /**
+     * 数据库驱动类
+     */
     protected Driver                                   driver;
 
     protected volatile int                             queryTimeout;
@@ -179,6 +170,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     protected volatile long                            timeBetweenConnectErrorMillis             = DEFAULT_TIME_BETWEEN_CONNECT_ERROR_MILLIS;
 
+    /**
+     * Connection 对象的验证器
+     */
     protected volatile ValidConnectionChecker          validConnectionChecker                    = null;
 
     protected final Map<DruidPooledConnection, Object> activeConnections                         = new IdentityHashMap<DruidPooledConnection, Object>();
@@ -280,7 +274,13 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected boolean                                  failFast                                  = false;
     protected volatile int                             failContinuous                            = 0;
     protected volatile long                            failContinuousTimeMillis                  = 0L;
+    /**
+     * 销毁线程
+     */
     protected ScheduledExecutorService                 destroyScheduler;
+    /**
+     * 生产者线程池
+     */
     protected ScheduledExecutorService                 createScheduler;
 
     final static AtomicLongFieldUpdater<DruidAbstractDataSource> failContinuousTimeMillisUpdater = AtomicLongFieldUpdater.newUpdater(DruidAbstractDataSource.class, "failContinuousTimeMillis");

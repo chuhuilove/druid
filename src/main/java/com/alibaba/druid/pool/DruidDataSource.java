@@ -127,7 +127,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     private long poolingPeakTime = 0;
     // 存储
     /**
-     * 存储Connection对象的数据结构
+     * 存储Connection对象的数据结构,数组的最大值,由{@link maxActive} 控制
      */
     private volatile DruidConnectionHolder[] connections;
     private int poolingCount = 0;
@@ -135,8 +135,13 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     private volatile long discardCount = 0;
     private int notEmptyWaitThreadCount = 0;
     private int notEmptyWaitThreadPeak = 0;
-    //
+    /**
+     * 需要清除的Connection对象
+     */
     private DruidConnectionHolder[] evictConnections;
+    /**
+     * 保持活跃的Connection对象
+     */
     private DruidConnectionHolder[] keepAliveConnections;
 
     // 线程
@@ -148,6 +153,11 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     private CreateConnectionThread createConnectionThread;
     private DestroyConnectionThread destroyConnectionThread;
     private LogStatsThread logStatsThread;
+    /**
+     * 创建Connection的任务数量,启动创建Connection对象的任务数量
+     *
+     * 创建线程池是{@link createScheduler}
+     */
     private int createTaskCount;
 
     private final CountDownLatch initedLatch = new CountDownLatch(2);
@@ -839,6 +849,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 this.transactionIdSeedUpdater.addAndGet(this, delta);
             }
 
+            // 解析URL
             if (this.jdbcUrl != null) {
                 this.jdbcUrl = this.jdbcUrl.trim();
                 initFromWrapDriverUrl();
@@ -851,6 +862,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             if (this.dbType == null || this.dbType.length() == 0) {
                 this.dbType = JdbcUtils.getDbType(jdbcUrl, null);
             }
+
 
             if (JdbcConstants.MYSQL.equals(this.dbType)
                     || JdbcConstants.MARIADB.equals(this.dbType)
@@ -938,6 +950,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             SQLException connectError = null;
 
             if (createScheduler != null && asyncInit) {
+                // 异步创建Connection
                 for (int i = 0; i < initialSize; ++i) {
                     createTaskCount++;
                     CreateConnectionTask task = new CreateConnectionTask(true);
@@ -1057,6 +1070,8 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     }
 
     protected void createAndStartCreatorThread() {
+
+        LOG.error("cyzi'flag  into createAndStartCreatorThread function.....");
         if (createScheduler == null) {
             String threadName = "Druid-ConnectionPool-Create-" + System.identityHashCode(this);
             createConnectionThread = new CreateConnectionThread(threadName);
@@ -1140,6 +1155,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     }
 
     private void validationQueryCheck() {
+        LOG.error(" into  function validationQueryCheck....");
         if (!(testOnBorrow || testOnReturn || testWhileIdle)) {
             return;
         }
@@ -1191,7 +1207,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         }
 
         if (removeAbandoned) {
-            LOG.warn("removeAbandoned is true, not use in productiion.");
+            LOG.warn("removeAbandoned is true, not use in production.");
         }
     }
 
@@ -1253,6 +1269,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         }
     }
 
+    /**
+     * 初始化validConnectionChecker,
+     */
     private void initValidConnectionChecker() {
         if (this.validConnectionChecker != null) {
             return;
@@ -1289,7 +1308,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
         for (Class<?> driverClass = driver.getClass(); ; ) {
             String realDriverClassName = driverClass.getName();
-            if (realDriverClassName.equals(JdbcConstants.MYSQL_DRIVER) //
+            if (realDriverClassName.equals(JdbcConstants.MYSQL_DRIVER)
                     || realDriverClassName.equals(JdbcConstants.MYSQL_DRIVER_6)) {
                 this.exceptionSorter = new MySqlExceptionSorter();
                 this.isMySql = true;
@@ -1351,8 +1370,6 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     }
 
     public DruidPooledConnection getConnectionDirect(long maxWaitMillis) throws SQLException {
-
-        LOG.warn(" function getConnectionDirect called,the maxWaitMillis is :" + maxWaitMillis);
 
         int notFullTimeoutRetryCnt = 0;
         for (; ; ) {

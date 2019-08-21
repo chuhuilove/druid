@@ -20,6 +20,7 @@ import java.util.Properties;
 
 /**
  * An interface to allow for exception evaluation.
+ * 允许异常评估的接口
  */
 public interface ExceptionSorter {
 
