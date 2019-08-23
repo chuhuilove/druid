@@ -950,6 +950,8 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             SQLException connectError = null;
 
             if (createScheduler != null && asyncInit) {
+
+                LOG.error("async create Connection start....");
                 // 异步创建Connection
                 for (int i = 0; i < initialSize; ++i) {
                     createTaskCount++;
@@ -958,6 +960,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 }
             } else if (!asyncInit) {
                 // init connections
+                LOG.error("sync create Connection start....");
                 while (poolingCount < initialSize) {
                     try {
                         PhysicalConnectionInfo pyConnectInfo = createPhysicalConnection();
@@ -1378,7 +1381,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             try {
                 poolableConnection = getConnectionInternal(maxWaitMillis);
             } catch (GetConnectionTimeoutException ex) {
-                // 处理获取连接超时
+                // 处理获取连接超时 by cyzi
                 if (notFullTimeoutRetryCnt <= this.notFullTimeoutRetryCount && !isFull()) {
                     notFullTimeoutRetryCnt++;
                     if (LOG.isWarnEnabled()) {
@@ -2426,7 +2429,12 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         return true;
     }
 
+
+    /**
+     * 异步创建Connection的任务类
+     */
     public class CreateConnectionTask implements Runnable {
+
 
         private int errorCount = 0;
         private boolean initTask = false;
